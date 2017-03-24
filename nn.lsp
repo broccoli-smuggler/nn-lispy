@@ -1,4 +1,6 @@
 (load "C:/Dev/LISP/nn-lispy/activation-functions.lsp")
+								
+;;; Basic neural network in lisp
 
 (defvar *Y*)
 (defvar *x*)
@@ -17,8 +19,6 @@
 			 					 (1 1 1 1))))
 								 
 (setq *syn-0* (rand-matrix-zero-mean 4 1))
-								
-;;; Basic neural network in lisp
 
 ;; Random matrix creation functions
 (defun random-vector-zero-mean (len)
@@ -63,17 +63,17 @@
 										  (make-array i :displaced-to (transpose m2) :displaced-index-offset (* y i))))))
 		acc))
 		
-(defun forward-prop-layer (layer syn)
+(defun forward-prop-layer (layer syn active-fn)
 	(let* ((dotted (dot-product layer syn))
 		   (dims (array-dimensions dotted))
 		   (out-layer (make-array dims :initial-element 0)))
 		(dotimes (x (nth 0 dims))
 			(dotimes (y (nth 1 dims))
-				(setf (aref out-layer x y) (ReLu (aref dotted x y)))))
+				(setf (aref out-layer x y) (funcall active-fn (aref dotted x y)))))
 		out-layer))
 		
 
-(forward-prop-layer *x* *syn-0*)
+(print (forward-prop-layer *x* *syn-0* 'ReLu))
 
 
 
