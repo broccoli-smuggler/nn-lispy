@@ -15,8 +15,12 @@
 			 					 (1 1 1 0) 
 			 					 (0 0 1 0) 
 			 					 (1 1 1 1))))
+								 
+(setq *syn-0* (rand-matrix-zero-mean 4 1))
 								
 ;;; Basic neural network in lisp
+
+;; Random matrix creation functions
 (defun random-vector-zero-mean (len)
 	(let ((acc nil))
 		(dotimes (i len)
@@ -32,12 +36,20 @@
 (defun rand-matrix-zero-mean (n m)
 	(make-array (list n m)
 		:initial-contents (make-rand-matrix n m)))
-
-(setq *syn-0* (rand-matrix-zero-mean 4 2))
 		
+;; Rossetta code for transpose
+(defun transpose (A)
+  (let* ((m (array-dimension A 0))
+         (n (array-dimension A 1))
+         (B (make-array `(,n ,m) :initial-element 0)))
+    (loop for i from 0 below m do
+          (loop for j from 0 below n do
+                (setf (aref B j i)
+                      (aref A i j))))
+    B))
+
+
 (defun dot (v w)
-	(print v)
-	(print w)
 	(reduce #'+ (map 'vector #'(lambda (x y) (* x y)) v w)))
 		
 (defun dot-product (m1 m2)
@@ -49,7 +61,7 @@
 	    (dotimes (x i)
 			(dotimes (y j)
 				(setf (aref acc x y) (dot (make-array i :displaced-to m1 :displaced-index-offset (* x i))
-										  (make-array i :displaced-to (adjust-array m2 (reverse r2)) :displaced-index-offset (* y i))))))
+										  (make-array i :displaced-to (transpose m2) :displaced-index-offset (* y i))))))
 		(print acc)
 		acc))
 		
@@ -61,7 +73,6 @@
 		
 (print *syn-0*)
 (print *x*)
-(print nil)
 (dot-product *x* *syn-0*)
 
 
