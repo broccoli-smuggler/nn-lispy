@@ -48,7 +48,6 @@
                       (aref A i j))))
     B))
 
-
 (defun dot (v w)
 	(reduce #'+ (map 'vector #'(lambda (x y) (* x y)) v w)))
 		
@@ -62,18 +61,19 @@
 			(dotimes (y j)
 				(setf (aref acc x y) (dot (make-array i :displaced-to m1 :displaced-index-offset (* x i))
 										  (make-array i :displaced-to (transpose m2) :displaced-index-offset (* y i))))))
-		(print acc)
 		acc))
 		
-		
 (defun forward-prop-layer (layer syn)
-	(let ((layer-next nil))
-		(setf layer-next (ReLu (dot-product layer syn)))
-		layer-next))
+	(let* ((dotted (dot-product layer syn))
+		   (dims (array-dimensions dotted))
+		   (out-layer (make-array dims :initial-element 0)))
+		(dotimes (x (nth 0 dims))
+			(dotimes (y (nth 1 dims))
+				(setf (aref out-layer x y) (ReLu (aref dotted x y)))))
+		out-layer))
 		
-(print *syn-0*)
-(print *x*)
-(dot-product *x* *syn-0*)
+
+(forward-prop-layer *x* *syn-0*)
 
 
 
