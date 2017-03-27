@@ -45,19 +45,24 @@
 		acc))
 
 ;; Apply a function to every element of a Matrix
-(defun func-M (func M)
+(defun func-M (func M &rest args)
 	(let* ((dims (array-dimensions M))
 		   (out-M (make-array dims :initial-element 0)))
 		(dotimes (i (nth 0 dims))
 			(dotimes (j (nth 1 dims))
-				(setf (aref out-M i j) (funcall func (aref M i j)))))
+				(if (null args)
+					(setf (aref out-M i j) (funcall func (aref M i j)))
+					(setf (aref out-M i j) (funcall func (aref M i j) args)))))
 		out-M))
 		
-;; Apply a function to two same sized matrix (cast)
-(defun M-func-M (func M1 M2)
+;; Apply a function to two same sized matrix (cast) elementwise
+(defun M-func-M (func M1 M2 &rest args)
 	(let* ((dims (array-dimensions M1))
 		   (out-M (make-array dims :initial-element 0)))
 	    (dotimes (i (nth 0 dims))
 			(dotimes (j (nth 1 dims))
-				(setf (aref out-M i j) (funcall func (aref M1 i j) (aref M2 i j)))))
+				(if (null args)
+					(setf (aref out-M i j) (funcall func (aref M1 i j) (aref M2 i j)))
+					(setf (aref out-M i j) (funcall func (aref M1 i j) (aref M2 i j) args)))))
+				
 		out-M))
