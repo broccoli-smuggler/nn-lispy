@@ -1,5 +1,11 @@
 ;;; Activation functions
 
+(defun sigmoid (x)
+	(/ 1 (+ 1 (exp (* -1 x)))))
+	
+(defun dev-sigmoid (x)
+	(* x (- 1 x)))
+
 (defun ReLu (x)
 	(max 0 x))
 	
