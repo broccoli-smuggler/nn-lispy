@@ -1,10 +1,13 @@
 (load "C:/Dev/LISP/nn-lispy/activation-functions.lsp")
+(load "C:/Dev/LISP/nn-lispy/matrix.lsp")
 								
 ;;; Basic neural network in lisp
 
 (defvar *Y*)
 (defvar *x*)
 (defvar *syn-0*)
+(defvar layer1)
+(defvar deltaOL)
 
 (setq *Y* (make-array '(4 1)
 		    :initial-contents '((0) 
@@ -12,68 +15,45 @@
 								(1) 
 			 					(1))))
  
-(setq *x* (make-array '(4 4)
-		     :initial-contents '((1 0 1 1) 
-			 					 (1 1 1 0) 
-			 					 (0 0 1 0) 
-			 					 (1 1 1 1))))
+(setq *x* (make-array '(4 3)
+		     :initial-contents '((0 0 1) 
+			 					 (0 0 1) 
+			 					 (1 1 1) 
+			 					 (1 1 1))))
 								 
-(setq *syn-0* (rand-matrix-zero-mean 4 1))
+(setq *syn-0* (rand-matrix-zero-mean 3 1))
 
-;; Random matrix creation functions
-(defun random-vector-zero-mean (len)
-	(let ((acc nil))
-		(dotimes (i len)
-			(push (- (* (random 1.0) 2) 1) acc))
-		acc))
-		
-(defun make-rand-matrix (n m)
-	(let ((acc nil))
-		(dotimes (i n)
-			(push (random-vector-zero-mean m) acc))
-		acc))
 
-(defun rand-matrix-zero-mean (n m)
-	(make-array (list n m)
-		:initial-contents (make-rand-matrix n m)))
-		
-;; Rossetta code for transpose
-(defun transpose (A)
-  (let* ((m (array-dimension A 0))
-         (n (array-dimension A 1))
-         (B (make-array `(,n ,m) :initial-element 0)))
-    (loop for i from 0 below m do
-          (loop for j from 0 below n do
-                (setf (aref B j i)
-                      (aref A i j))))
-    B))
+; Apply the activation function to the composition of two layers
+(defun forward-prop-layer (activate-func layer0 syn0)
+   (func-M activate-func (dot-product layer0 syn0)))  
 
-(defun dot (v w)
-	(reduce #'+ (map 'vector #'(lambda (x y) (* x y)) v w)))
-		
-(defun dot-product (m1 m2)
-	(let* ((r1 (array-dimensions m1))
-		   (r2 (array-dimensions m2))
-		   (i (nth 0 r1))
-		   (j (nth 1 r2))
-		   (acc (make-array (list i j) :initial-element 0)))
-	    (dotimes (x i)
-			(dotimes (y j)
-				(setf (aref acc x y) (dot (make-array i :displaced-to m1 :displaced-index-offset (* x i))
-										  (make-array i :displaced-to (transpose m2) :displaced-index-offset (* y i))))))
-		acc))
-		
-(defun forward-prop-layer (layer syn active-fn)
-	(let* ((dotted (dot-product layer syn))
-		   (dims (array-dimensions dotted))
-		   (out-layer (make-array dims :initial-element 0)))
-		(dotimes (x (nth 0 dims))
-			(dotimes (y (nth 1 dims))
-				(setf (aref out-layer x y) (funcall active-fn (aref dotted x y)))))
-		out-layer))
-		
+(defun clamp (x)
+	(if (>= x 1)
+		1
+		x))
+   
+;; We clamp the output layer, otherwise we do silly things
+(defun out-error (y layer-O)
+	(M-func-M '- y (func-M 'clamp layer-O)))  ;Error is just y - last layer
 
-(print (forward-prop-layer *x* *syn-0* 'ReLu))
+(defun delta-of-error (layer-E layer)
+	(M-func-M '* layer-E (func-M 'dev-ReLu layer)))
+
+;; Backpropogate the error change to the previous synapse (weights)
+(defun update-syn (syn0 layer0 deltaL1)
+	(M-func-M '+ syn0 (dot-product (transpose layer0) deltaL1)))
+
+
+(dotimes (i 6)
+	(setf layer1 (forward-prop-layer 'ReLu *x* *syn-0*))
+	(setf deltaOL (delta-of-error (out-error *y* layer1) (func-M 'clamp layer1)))
+	(setf *syn-0* (update-syn *syn-0* *x* deltaOL)))
+	
+(print (func-M 'clamp (forward-prop-layer 'ReLu *x* *syn-0*)))
+
+
+
 
 
 
