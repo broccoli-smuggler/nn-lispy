@@ -17,6 +17,13 @@
 	(make-array (list n m)
 		:initial-contents (make-rand-matrix n m)))
 		
+(defun top-clamp (x clamp-no)
+	(if (listp clamp-no)
+		(setf clamp-no (nth 0 clamp-no)))
+    (if (>= x clamp-no)
+        clamp-no
+        x))
+		
 ;; Rossetta code for transpose
 (defun transpose (A)
   (let* ((m (array-dimension A 0))
@@ -44,15 +51,16 @@
 										  (make-array n :displaced-to (transpose m2) :displaced-index-offset (* y n))))))
 		acc))
 
+
 ;; Apply a function to every element of a Matrix
 (defun func-M (func M &rest args)
 	(let* ((dims (array-dimensions M))
 		   (out-M (make-array dims :initial-element 0)))
-		(dotimes (i (nth 0 dims))
-			(dotimes (j (nth 1 dims))
-				(if (null args)
-					(setf (aref out-M i j) (funcall func (aref M i j)))
-					(setf (aref out-M i j) (funcall func (aref M i j) args)))))
+		   (dotimes (i (nth 0 dims))
+				(dotimes (j (nth 1 dims))
+					(if (null args)
+						(setf (aref out-M i j) (funcall func (aref M i j)))
+						(setf (aref out-M i j) (funcall func (aref M i j) args)))))
 		out-M))
 		
 ;; Apply a function to two same sized matrix (cast) elementwise

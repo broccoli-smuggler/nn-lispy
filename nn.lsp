@@ -34,14 +34,6 @@
                                  
 (setq *syn-0* (rand-matrix-zero-mean 4 7))
 (setq *syn-1* (rand-matrix-zero-mean 7 1))
-
-
-(defun top-clamp (x clamp-no)
-	(if (listp clamp-no)
-		(setf clamp-no (nth 0 clamp-no)))
-    (if (>= x clamp-no)
-        clamp-no
-        x))
    
 ; Apply the activation function to the composition of two layers
 (defun forward-prop-layer (activate-func layer syn activate-args)
@@ -49,9 +41,22 @@
         (func-M activate-func (dot-product layer syn))
         (func-M activate-func (dot-product layer syn) activate-args)))  
    
-;; Optionally clamp the output layer for activation functions that are [-n, > 1]
-(defun out-error (y layer-O)
+(defun error-function (y layer-O)
 	(M-func-M '- y layer-O))
+	
+(defun softmax-function (M)
+	(let* ((dims (array-dimensions M))
+		    (out-M (make-array dims :initial-element 0))
+			(i (nth 0 dims))
+			(j (nth 1 dims)))
+		    (dotimes (y j)
+				(let* ((v (make-array i :displaced-to M :displaced-index-offset (* y i)))
+					   (v-exp (map 'vector #'exp v))
+					   (the-sum (reduce #'+ v-exp)))
+					(dotimes (x i)
+						(setf (aref out-M x y) (/ (svref v-exp x) the-sum)))))
+			out-M))
+	
 
 (defun delta-of-error (layer-E layer dev-func activate-args)
     (if (null activate-args)
@@ -64,21 +69,22 @@
 
 
 (defvar activate-args)
-(setf activate-args 0.3)
+(setf activate-args 0.4)  ; ELU works with alpha < 0.5 for y - out-layer
 (defvar *activate-func*)
 (setf *activate-func* 'ELU)
 (defvar *dev-activate-func*)
 (setf *dev-activate-func* 'dev-ELU)
-    
-(dotimes (i 500)
+
+
+(dotimes (i 300)
     ; Forward
     (setf layer1 (forward-prop-layer *activate-func* *x* *syn-0* activate-args))
     (setf layer2 (forward-prop-layer *activate-func* layer1 *syn-1* activate-args))
     
     ; Back
-    (setf err1 (out-error *y* (func-M 'top-clamp layer2 1)))
+	(print (softmax-function layer2))
+    (setf err1 (error-function *y* (func-M 'top-clamp layer2 1)))
     (setf delta1L (delta-of-error err1 layer2 *dev-activate-func* activate-args))
-    
     (setf err0 (dot-product delta1L (transpose *syn-1*)))
     (setf delta0L (delta-of-error err0 layer1 *dev-activate-func* activate-args))
     
