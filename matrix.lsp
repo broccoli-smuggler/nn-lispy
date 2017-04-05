@@ -24,6 +24,16 @@
         clamp-no
         x))
 		
+(defun max-M (M)
+	(let* ((dims (array-dimensions M))
+		   (max-num (aref M 0 0)))
+		   (dotimes (i (nth 0 dims))
+				(dotimes (j (nth 1 dims))
+					(let ((elt (aref M i j)))
+						(if (> elt max-num)
+							(setf max-num elt)))))
+		max-num))
+
 ;; Rossetta code for transpose
 (defun transpose (A)
   (let* ((m (array-dimension A 0))
@@ -53,7 +63,7 @@
 
 
 ;; Apply a function to every element of a Matrix
-(defun func-M (func M &rest args)
+(defun func-M (func M &optional args)
 	(let* ((dims (array-dimensions M))
 		   (out-M (make-array dims :initial-element 0)))
 		   (dotimes (i (nth 0 dims))
@@ -64,7 +74,7 @@
 		out-M))
 		
 ;; Apply a function to two same sized matrix (cast) elementwise
-(defun M-func-M (func M1 M2 &rest args)
+(defun M-func-M (func M1 M2 &optional args)
 	(let* ((dims (array-dimensions M1))
 		   (out-M (make-array dims :initial-element 0)))
 	    (dotimes (i (nth 0 dims))

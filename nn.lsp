@@ -44,13 +44,17 @@
 (defun error-function (y layer-O)
 	(M-func-M '- y layer-O))
 	
+;; http://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
+;; In order to not get a floating point error overshoot we use a constant d
+;; where d = -max(M)
 (defun softmax-function (M)
 	(let* ((dims (array-dimensions M))
 		    (out-M (make-array dims :initial-element 0))
 			(i (nth 0 dims))
 			(j (nth 1 dims)))
 		    (dotimes (y j)
-				(let* ((v (make-array i :displaced-to M :displaced-index-offset (* y i)))
+				(let* ((d (max-M M))
+					   (v (make-array i :displaced-to (func-M '- M d) :displaced-index-offset (* y i)))
 					   (v-exp (map 'vector #'exp v))
 					   (the-sum (reduce #'+ v-exp)))
 					(dotimes (x i)
@@ -82,8 +86,8 @@
     (setf layer2 (forward-prop-layer *activate-func* layer1 *syn-1* activate-args))
     
     ; Back
-	(print (softmax-function layer2))
-    (setf err1 (error-function *y* (func-M 'top-clamp layer2 1)))
+	(print layer2)
+    (setf err1 (error-function *y* (softmax-function layer2)))
     (setf delta1L (delta-of-error err1 layer2 *dev-activate-func* activate-args))
     (setf err0 (dot-product delta1L (transpose *syn-1*)))
     (setf delta0L (delta-of-error err0 layer1 *dev-activate-func* activate-args))

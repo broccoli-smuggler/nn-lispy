@@ -15,15 +15,12 @@
 		1))
 
 (defun ELU (x a)
-	(if (listp a)
-		(setf a (nth 0 a)))
 	(if (>= x 0)
 		x
 		(* a (- (exp x) 1))))
 
 (defun dev-ELU (x a)
-	(if (listp a)
-		(setf a (nth 0 a)))
 	(if (< x 0)
 		(+ (ELU x a) a)
 		1))
+	
