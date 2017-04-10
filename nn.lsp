@@ -1,5 +1,5 @@
-(load "C:/Dev/LISP/nn-lispy/activation-functions.lsp")
-(load "C:/Dev/LISP/nn-lispy/matrix.lsp")
+(load (merge-pathnames "activation-functions.lsp" *load-truename*))
+(load (merge-pathnames "matrix.lsp" *load-truename*))
                                 
 ;;; Basic neural network in lisp
 
@@ -51,10 +51,12 @@
 	(let* ((dims (array-dimensions M))
 		    (out-M (make-array dims :initial-element 0))
 			(i (nth 0 dims))
-			(j (nth 1 dims)))
+			(j (nth 1 dims))
+            (d (max-M M))
+            (Md (func-M '- M d)))
+
 		    (dotimes (y j)
-				(let* ((d (max-M M))
-					   (v (make-array i :displaced-to (func-M '- M d) :displaced-index-offset (* y i)))
+				(let* ((v (make-array i :displaced-to Md :displaced-index-offset (* y i)))
 					   (v-exp (map 'vector #'exp v))
 					   (the-sum (reduce #'+ v-exp)))
 					(dotimes (x i)
@@ -80,19 +82,19 @@
 (setf *dev-activate-func* 'dev-ELU)
 
 
-(dotimes (i 300)
+(dotimes (i 400)
     ; Forward
     (setf layer1 (forward-prop-layer *activate-func* *x* *syn-0* activate-args))
     (setf layer2 (forward-prop-layer *activate-func* layer1 *syn-1* activate-args))
     
     ; Back
-	(print layer2)
-    (setf err1 (error-function *y* (softmax-function layer2)))
+    (setf err1 (error-function *y* (func-M 'top-clamp layer2 1)))
     (setf delta1L (delta-of-error err1 layer2 *dev-activate-func* activate-args))
     (setf err0 (dot-product delta1L (transpose *syn-1*)))
     (setf delta0L (delta-of-error err0 layer1 *dev-activate-func* activate-args))
     
     ; Update
+
     (setf *syn-1* (update-syn *syn-1* layer1 delta1L))
     (setf *syn-0* (update-syn *syn-0* *x* delta0L)))
 
