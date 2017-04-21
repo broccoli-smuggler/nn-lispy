@@ -9,6 +9,7 @@
 (defvar *syn-1*)
 (defvar layer1)
 (defvar layer2)
+(defvar outl)
 (defvar delta0L)
 (defvar delta1L)
 (defvar err0)
@@ -44,6 +45,7 @@
 (defun error-function (y layer-O)
 	(M-func-M '- y layer-O))
 	
+; Softmax function is used only when we are trying to determine 1-hot encoding
 ;; http://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
 ;; In order to not get a floating point error overshoot we use a constant d
 ;; where d = -max(M)
@@ -75,7 +77,7 @@
 
 
 (defvar activate-args)
-(setf activate-args 0.4)  ; ELU works with alpha < 0.5 for y - out-layer
+(setf activate-args 0.5)  ; ELU works with alpha < 0.5 for y - out-layer
 (defvar *activate-func*)
 (setf *activate-func* 'ELU)
 (defvar *dev-activate-func*)
@@ -86,15 +88,16 @@
     ; Forward
     (setf layer1 (forward-prop-layer *activate-func* *x* *syn-0* activate-args))
     (setf layer2 (forward-prop-layer *activate-func* layer1 *syn-1* activate-args))
-    
+    (setf outl (softmax-function layer2))
     ; Back
     (setf err1 (error-function *y* (func-M 'top-clamp layer2 1)))
+    ;(print (error-function *y* (func-M 'top-clamp layer2 1)))
+
     (setf delta1L (delta-of-error err1 layer2 *dev-activate-func* activate-args))
     (setf err0 (dot-product delta1L (transpose *syn-1*)))
     (setf delta0L (delta-of-error err0 layer1 *dev-activate-func* activate-args))
     
     ; Update
-
     (setf *syn-1* (update-syn *syn-1* layer1 delta1L))
     (setf *syn-0* (update-syn *syn-0* *x* delta0L)))
 
